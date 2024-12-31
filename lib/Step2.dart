@@ -1,11 +1,17 @@
 // Screen 2: Wrapped Highlights
 import 'dart:async';
+import 'dart:io';
+import 'dart:ui';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:linear_progress_bar/linear_progress_bar.dart';
-import 'package:runnerwrapped/slide_exporter.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:screenshot/screenshot.dart';
 
 class WrappedScreen extends StatefulWidget {
   final List<List<dynamic>> data;
@@ -23,7 +29,9 @@ class _WrappedScreenState extends State<WrappedScreen> {
   Timer? _timer;
   int _currentSlideIndex = 0;
   final int slideCount = 18; // Adjust this to match the number of slides
-  final SlideExportService slideExportService = SlideExportService();
+
+  // Create a list of ScreenshotControllers
+  final List<ScreenshotController> _screenshotControllers = [];
 
   @override
   void initState() {
@@ -34,17 +42,67 @@ class _WrappedScreenState extends State<WrappedScreen> {
     _audioPlayer = AudioPlayer(); // Initialize the AudioPlayer
     _startAudio(); // Start the audio when the widget is created
     _startTimer(); // Start the timer for the slides
-    // Create GlobalKeys for all slides
+
+    // Initialize ScreenshotControllers for each slide
     for (int i = 0; i < slideCount; i++) {
-      slideExportService.addSlideKey(GlobalKey());  // Dynamically add a new GlobalKey for each slide
+      _screenshotControllers.add(ScreenshotController());
     }
-
-
   }
-  // Add GlobalKeys for slides 7 to 13
-  final Map<int, GlobalKey> _captureKeys = {
-    for (int i = 7; i <= 13; i++) i: GlobalKey(),
-  };
+
+  @override
+  void dispose() {
+    // Stop and dispose of audio player
+    _audioPlayer.stop();
+    _audioPlayer.dispose();
+
+    // Cancel the timer
+    _timer?.cancel();
+
+    // Dispose the page controller
+    _pageController?.dispose();
+
+    super.dispose();
+  }
+
+  Widget buildSlide(
+      String title, String subtitle, String imagePath, int index) {
+    return Screenshot(
+      controller: _screenshotControllers[index], // Use a unique controller
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 30),
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(imagePath),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 20),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                subtitle,
+                style: TextStyle(fontSize: 20, color: Colors.grey[300]),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   void _startAudio() async {
     await _audioPlayer.setSource(AssetSource('space/bg_music.mp3'));
@@ -70,21 +128,6 @@ class _WrappedScreenState extends State<WrappedScreen> {
 
 
 
-  @override
-  void dispose() {
-    // Stop and dispose of audio player
-    _audioPlayer.stop();
-    _audioPlayer.dispose();
-
-
-    // Cancel the timer
-    _timer?.cancel();
-
-    // Dispose the page controller
-    _pageController?.dispose();
-
-    super.dispose();
-  }
 
 
   Map<String, dynamic> calculateStats(List<List<dynamic>> data) {
@@ -138,18 +181,17 @@ class _WrappedScreenState extends State<WrappedScreen> {
     };
   }
 
-  // Initialize slideKeys with the required number of GlobalKeys
-  List<GlobalKey<State<StatefulWidget>>> slideKeys = List.generate(18, (index) => GlobalKey<State<StatefulWidget>>());
+
+  List<Uint8List?> _slideImages = []; // Store captured images here
 
 
-
+  final ScreenshotController _screenshotController = ScreenshotController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // The PageView fills the entire screen
           Positioned.fill(
             child: PageView.builder(
               controller: _pageController,
@@ -164,144 +206,103 @@ class _WrappedScreenState extends State<WrappedScreen> {
                 // Replace the embedded PageView with the slide data
                 switch (index) {
                   case 0:
-                    return RepaintBoundary(
-                      key: slideKeys[index], // Use index instead of i
-                      child: buildSlide("", "", "assets/space/1.png", index),
+                    return buildSlide("", "", "assets/space/1.png", index
                     );
                   case 1:
-                    return RepaintBoundary(
-                        key: slideKeys[index], // Use index instead of i
-                        child: buildSlide("", "", "assets/space/2.png", index)
+                    return buildSlide("", "", "assets/space/2.png", index
                     );
                   case 2:
-                    return RepaintBoundary(
-                  key: slideKeys[index], // Use index instead of i
-                        child: buildSlide("", "", "assets/space/3.png", index)
+                    return buildSlide("", "", "assets/space/3.png", index
                     );
                   case 3:
-                    return RepaintBoundary(
-                  key: slideKeys[index], // Use index instead of i
-                        child: buildSlide("", "", "assets/space/4.png", index)
+                    return buildSlide("", "", "assets/space/4.png", index
                     );
                   case 4:
-                    return RepaintBoundary(
-                  key: slideKeys[index], // Use index instead of i
-                        child: buildSlide("", "", "assets/space/5.png", index)
+                    return buildSlide("", "", "assets/space/5.png", index
                     );
                   case 5:
-                    return RepaintBoundary(
-                  key: slideKeys[index], // Use index instead of i
-                        child: buildSlide("", "", "assets/space/6.png", index)
+                    return  buildSlide("", "", "assets/space/6.png", index
                     );
                   case 6:
-                    return RepaintBoundary(
-                  key: slideKeys[index], // Use index instead of i
-                      child: buildSlide("", "", "assets/space/7.png", index)
+                    return buildSlide("", "", "assets/space/7.png", index
                     );
                   case 7:
-                    return RepaintBoundary(
-                  key: slideKeys[index], // Use index instead of i
-                      child: slideExportService.buildSlide(
+                    return buildSlide(
                       "Your 2024 Journey",
                       "You covered ${stats['totalDistance'].toStringAsFixed(2)} km this year.\n\n${calculateMoonDistance(stats['totalDistance'])}",
                       "assets/space/8.png",
                       index,
-                    )
+
                     );
                   case 8:
-                    return RepaintBoundary(
-                  key: slideKeys[index], // Use index instead of i
-                      child: slideExportService.buildSlide(
+                    return buildSlide(
                       "Time Well Spent",
                       "You spent approximately ${stats['totalTime']} hours moving.\n\n${convertSpeedOfLight(stats['totalSeconds'].toStringAsFixed(0))}",
                       "assets/space/9.png",
                       index,
-                    )
+
                     );
                   case 9:
-                    return RepaintBoundary(
-                        key: slideKeys[index], // Use index instead of i
-                        child: slideExportService.buildSlide(
+                    return  buildSlide(
                       "Longest Activity",
                       "Your longest single activity was ${stats['longestActivity'].toStringAsFixed(2)} km.\n\n${martianDaysTravel(stats['longestActivity'])}",
                       "assets/space/10.png",
                       index,
-                )
+
                     );
                   case 10:
-                    return RepaintBoundary(
-                      key: slideKeys[index], // Use index instead of i
-                      child: slideExportService.buildSlide(
+                    return buildSlide(
                       "Speeding Through",
                       "At your fastest, you reached ${stats['fastestSpeed'].toStringAsFixed(2)} km/h.\n\n${earthVelocitySpeed(stats['fastestSpeed'])}",
                       "assets/space/10.png",
                       index,
-                      )
                     );
                   case 11:
-                    return RepaintBoundary(
-                      key: slideKeys[index], // Use index instead of i
-                      child: slideExportService.buildSlide(
+                    return buildSlide(
                       "Rising High",
                       "You climbed ${stats['elevationGain'].toStringAsFixed(2)} m.\n\n${convertToFamousSpaceships(stats['elevationGain'])}",
                       "assets/space/10.png",
                       index,
-                      )
+
                     );
                   case 12:
-                    return RepaintBoundary(
-                      key: slideKeys[index], // Use index instead of i
-                      child: slideExportService.buildSlide(
+                    return buildSlide(
                       "Calories Burned",
                       "You burned ${stats['totalCalories']} calories.\n\n${lightPowerComparison(stats['totalCalories'])}",
                       "assets/space/10.png",
                       index,
-                      )
+
                     );
                   case 13:
-                    return RepaintBoundary(
-                        key: slideKeys[index], // Use index instead of i
-                        child: slideExportService.buildSlide(
+                    return buildSlide(
                       "Stepping Up",
                       "You took an incredible ${stats['totalSteps']} steps.\n\n${spacewalkComparison(stats['totalSteps'])}",
                       "assets/space/10.png",
                       index,
-                        )
+
                     );
                   case 14:
-                    return RepaintBoundary(
-                        key: slideKeys[index], // Use index instead of i
-                        child: buildSlide("", "", "assets/space/11.png", index)
-                    );
+                    return  buildSlide("", "", "assets/space/11.png", index);
+
                   case 15:
-                    return RepaintBoundary(
-                        key: slideKeys[index], // Use index instead of i
-                        child: buildSlide("", "", "assets/space/12.png", index)
-                    );
+                    return buildSlide("", "", "assets/space/12.png", index);
                   case 16:
-                    return RepaintBoundary(
-                      key: slideKeys[index], // Use index instead of i
-                      child: buildSlide("", "", "assets/space/13.png", index
-                      )
+                    return  buildSlide("", "", "assets/space/13.png", index
+
                     );
                   case 17:
-                    return RepaintBoundary(
-                      key: slideKeys[index], // Use index instead of i
-                      child: buildSlide(
+                    return buildSlide(
                       "Share Your Highlights",
                       "Let the galaxy celebrate your fantastic achievements this year!",
                       "assets/space/10.png",
                       index,
-                      )
+
                     );
                   case 18:
-                    return RepaintBoundary(
-                        key: slideKeys[index], // Use index instead of i
-                        child: slideExportService.buildSlide("I Got Mine, Get Yours!",
+                    return buildSlide("I Got Mine, Get Yours!",
                         "https://github.com/HelloZebra1133",
                         "assets/space/10.png",
                   index,
-                        )
                     );
                   default:
                     return SizedBox.shrink(); // Fallback for unexpected cases
@@ -314,10 +315,29 @@ class _WrappedScreenState extends State<WrappedScreen> {
             right: 20,
             child: FloatingActionButton(
               onPressed: () async {
-                await slideExportService.captureSlidesAndExport();
+                try {
+                  Uint8List? imageBytes = await _screenshotControllers[_currentSlideIndex].capture();
+                  if (imageBytes != null) {
+                    // Get the directory to save the file
+                    Directory directory = await getApplicationDocumentsDirectory();
+                    String filePath = '${directory.path}/screenshot_slide_${_currentSlideIndex}.png';
+
+                    // Save the file
+                    File file = File(filePath);
+                    await file.writeAsBytes(imageBytes);
+
+                    print("Screenshot saved successfully at $filePath");
+                  } else {
+                    print("Failed to capture screenshot");
+                  }
+                } catch (e) {
+                  print("Error capturing screenshot: $e");
+                }
               },
-              child: Icon(Icons.share),
-            ),
+              backgroundColor: Colors.white10,
+              child: Icon(Icons.camera_alt, color: Colors.black,),
+            )
+
           ),
 
           // LinearProgressBar overlay at the top of the screen
@@ -437,44 +457,7 @@ class _WrappedScreenState extends State<WrappedScreen> {
 
 
 
-  Widget buildSlide(String title, String subtitle, String imagePath, int i) {
-    GlobalKey _key = GlobalKey();
-      return RepaintBoundary(
-          key: _key,  // Ensure GlobalKey is assigned here
-          child:  Container(
-      padding: EdgeInsets.symmetric(horizontal: 30),
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage(imagePath), // Use AssetImage for local assets
-          fit: BoxFit.cover, // Adjusts how the image is displayed
-        ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
 
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: Colors.white, // Ensure text is visible on the background
-            ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 20),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-              subtitle,
-              style: TextStyle(fontSize: 20, color: Colors.grey[300]), // Adjust text color for visibility
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    ));
-  }
 
 
 }
