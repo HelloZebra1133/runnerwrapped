@@ -64,44 +64,69 @@ class _WrappedScreenState extends State<WrappedScreen> {
     super.dispose();
   }
 
-  Widget buildSlide(
-      String title, String subtitle, String imagePath, int index) {
+  bool _showWatermark = false;
+
+  Widget buildSlide(String title, String description, String imagePath, int index) {
     return Screenshot(
-      controller: _screenshotControllers[index], // Use a unique controller
+      controller: _screenshotControllers[index],
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 30),
+        width: double.infinity, // Ensures the container takes the full width
+        height: double.infinity, // Ensures the container takes the full height
         decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage(imagePath),
-            fit: BoxFit.cover,
+            fit: BoxFit.cover, // Ensures the image covers the whole container
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-              textAlign: TextAlign.center,
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (title.isNotEmpty)
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                if (description.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+              ],
             ),
-            SizedBox(height: 20),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                subtitle,
-                style: TextStyle(fontSize: 20, color: Colors.grey[300]),
-                textAlign: TextAlign.center,
+            if (_showWatermark)
+              Positioned(
+                bottom: 10,
+                right: 10,
+                child: Text(
+                  "GitHub: HelloZebra1133",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ),
           ],
         ),
       ),
     );
   }
+
+
 
 
   void _startAudio() async {
@@ -315,6 +340,9 @@ class _WrappedScreenState extends State<WrappedScreen> {
             right: 20,
             child: FloatingActionButton(
               onPressed: () async {
+                setState(() {
+                  _showWatermark = true;
+                });
                 try {
                   Uint8List? imageBytes = await _screenshotControllers[_currentSlideIndex].capture();
                   if (imageBytes != null) {
@@ -332,6 +360,10 @@ class _WrappedScreenState extends State<WrappedScreen> {
                   }
                 } catch (e) {
                   print("Error capturing screenshot: $e");
+                } finally {
+                  setState(() {
+                    _showWatermark = false;
+                  });
                 }
               },
               backgroundColor: Colors.white10,
