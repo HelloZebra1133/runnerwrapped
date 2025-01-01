@@ -68,17 +68,20 @@ class _UploadScreenState extends State<UploadScreen> {
       type: FilePickerDep.FileType.custom,
       allowedExtensions: ['zip'],
     );
-
+print ("Checking...");
     if (result != null) {
+      print ("Result not null");
       String filePath = result.files.single.path!;
       Directory extractDir = await setupExtractionDirectory();
-
+      print ("About to process...");
       // Start processing with a loading indicator
       setState(() {
+        print ("Processing...");
         isProcessing = true;
       });
 
       try {
+        print ("Success 1");
         List<List<dynamic>> data = await processZip(filePath, extractDir);
         Navigator.push(
           context,
@@ -99,12 +102,14 @@ class _UploadScreenState extends State<UploadScreen> {
   }
 
   Future<List<List<dynamic>>> processZip(String filePath, Directory extractionDir) async {
+    print ("Success 2");
     final bytes = await File(filePath).readAsBytes();
     final archive = ZipDecoder().decodeBytes(bytes);
 
     List<List<dynamic>> parsedData = [];
     final totalFiles = archive.length;
     int processedFiles = 0;
+    print ("Process: $bytes, $archive, $totalFiles");
 
     for (final file in archive) {
       if (file.isFile) {
@@ -112,34 +117,56 @@ class _UploadScreenState extends State<UploadScreen> {
           final extracted = file.content as List<int>;
           final csvContent = utf8.decode(extracted);
           parsedData.addAll(const CsvToListConverter(eol: "\n").convert(csvContent));
-        } else if (file.isFile && file.name.endsWith('.fit.gz')) {
-          final decompressedBytes = const GZipDecoder().decodeBytes(file.content as List<int>);
-          final fitFilePath = '${extractionDir.path}/${file.name.replaceAll('.gz', '')}';
-          await File(fitFilePath).writeAsBytes(decompressedBytes);
-          await parseFitFile(fitFilePath);
+        } else if (file.name.endsWith('.fit.gz')) {
+          try {
+            final decompressedBytes = const GZipDecoder().decodeBytes(file.content as List<int>);
+            final fitFilePath = '${extractionDir.path}/${file.name.replaceAll('.gz', '')}';
+            final fitFile = File(fitFilePath);
+
+            // Ensure directory exists
+            print('Creating directory: ${fitFile.parent.path}');
+            await fitFile.parent.create(recursive: true);
+
+            // Write the file
+            await fitFile.writeAsBytes(decompressedBytes);
+            print('Extracted FIT file to: $fitFilePath');
+
+            // Process the FIT file
+            await parseFitFile(fitFilePath);
+          } catch (e) {
+            print('Error processing FIT file ${file.name}: $e');
+          }
         }
       }
 
       // Update progress
       processedFiles++;
       progressNotifier.value = processedFiles / totalFiles;
+      print('Processed files number: $processedFiles');
     }
+
 
     if (parsedData.isEmpty) {
       throw Exception("No valid files found in the ZIP archive.");
     }
-
+    print ("Success 3");
+    print ("$parsedData");
     return parsedData;
   }
 
   Future<Directory> setupExtractionDirectory() async {
-    final tempDir = await getTemporaryDirectory();
-    final extractionDir = Directory('${tempDir.path}');
+    Directory tempDir = await getTemporaryDirectory();
+    //
+    String tempPath = tempDir.path;
+    //final tempDir = await getTemporaryDirectory();
+    final extractionDir = Directory('${tempPath}');
     if (!await extractionDir.exists()) {
       await extractionDir.create(recursive: true);
     }
+    print('Extraction directory path: ${extractionDir.path}');
     return extractionDir;
   }
+
 
   Future<void> parseFitFile(String fitFilePath) async {
     final file = File(fitFilePath);

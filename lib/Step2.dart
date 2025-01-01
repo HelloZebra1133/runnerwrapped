@@ -90,7 +90,7 @@ class _WrappedScreenState extends State<WrappedScreen> {
                   Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 28,
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
@@ -102,7 +102,7 @@ class _WrappedScreenState extends State<WrappedScreen> {
                     child: Text(
                       description,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 20,
                         color: Colors.white,
                       ),
                       textAlign: TextAlign.center,
