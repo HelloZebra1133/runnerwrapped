@@ -79,3 +79,5 @@ The Strava zip file may contain profile info that you are more than welcome to r
 - activities
   - \[activity numbers].fit.gz
 
+This was created for family and friends but feel free to take a look! I might improve this from time-to-time.
+

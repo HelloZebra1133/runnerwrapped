@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:file_picker/file_picker.dart' as FilePickerDep;
@@ -112,9 +111,9 @@ class _UploadScreenState extends State<UploadScreen> {
         if (file.name.endsWith('.csv') && file.name.contains('activities')) {
           final extracted = file.content as List<int>;
           final csvContent = utf8.decode(extracted);
-          parsedData.addAll(CsvToListConverter(eol: "\n").convert(csvContent));
+          parsedData.addAll(const CsvToListConverter(eol: "\n").convert(csvContent));
         } else if (file.isFile && file.name.endsWith('.fit.gz')) {
-          final decompressedBytes = GZipDecoder().decodeBytes(file.content as List<int>);
+          final decompressedBytes = const GZipDecoder().decodeBytes(file.content as List<int>);
           final fitFilePath = '${extractionDir.path}/${file.name.replaceAll('.gz', '')}';
           await File(fitFilePath).writeAsBytes(decompressedBytes);
           await parseFitFile(fitFilePath);
@@ -168,22 +167,22 @@ class _UploadScreenState extends State<UploadScreen> {
                 if (isProcessing) {
                   return Column(
                     children: [
-                      Text("${(progress * 280).toStringAsFixed(0)}% completed", style: TextStyle(color: Colors.white),),
+                      Text("${(progress * 280).toStringAsFixed(0)}% completed", style: const TextStyle(color: Colors.white),),
                     ],
                   );
                 }
-                return SizedBox.shrink();
+                return const SizedBox.shrink();
               },
             ),
             ElevatedButton(
               onPressed: isProcessing ? null : () => pickFile(context),
               child: Text(isProcessing ? "Processing..." : "Upload Strava ZIP"),
             ),
-            SizedBox(height: 200,),
+            const SizedBox(height: 200,),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-        Text(
+        const Text(
           "Made by HelloZebra1133",
           style: TextStyle(color: Colors.white
           ),
@@ -191,7 +190,7 @@ class _UploadScreenState extends State<UploadScreen> {
           Text(
             "🦓",
             style: GoogleFonts.notoColorEmoji(
-              textStyle: TextStyle(color: Colors.white, letterSpacing: .5),
+              textStyle: const TextStyle(color: Colors.white, letterSpacing: .5),
             ),
           ),
       ]
@@ -203,7 +202,7 @@ class _UploadScreenState extends State<UploadScreen> {
                   // Opens the GitHub repo link
                   launchUrl(Uri.parse("https://github.com/HelloZebra1133"));
                 },
-                child: Text(
+                child: const Text(
                   "GitHub Profile",
                   style: TextStyle(
                     color: Colors.blue,
@@ -212,7 +211,21 @@ class _UploadScreenState extends State<UploadScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 120,)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: GestureDetector(
+                onTap: () {
+                  // Opens the GitHub repo link
+                  launchUrl(Uri.parse("https://github.com/HelloZebra1133/runnerwrapped?tab=readme-ov-file#usage-instructions"));
+                },
+                child: const Icon(
+                  Icons.question_mark,
+                  color: Colors.blue,
+                  size: 50,
+                ),
+              ),
+            ),
+            const SizedBox(height: 80),
           ],
         ),
       ),

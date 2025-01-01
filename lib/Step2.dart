@@ -1,15 +1,11 @@
-// Screen 2: Wrapped Highlights
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gal/gal.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:linear_progress_bar/linear_progress_bar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
@@ -39,7 +35,6 @@ class _WrappedScreenState extends State<WrappedScreen> {
   @override
   void initState() {
     super.initState();
-    //WidgetsBinding.instance.addObserver(this); // Add observer
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     stats = calculateStats(widget.data); // Initialize stats
     _pageController = PageController(); // Initialize the PageController
@@ -68,7 +63,6 @@ class _WrappedScreenState extends State<WrappedScreen> {
 
     // Dispose the page controller
     _pageController?.dispose();
-    //WidgetsBinding.instance.removeObserver(this); // Remove observer
 
     super.dispose();
   }
@@ -95,7 +89,7 @@ class _WrappedScreenState extends State<WrappedScreen> {
                 if (title.isNotEmpty)
                   Text(
                     title,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 24,
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -107,7 +101,7 @@ class _WrappedScreenState extends State<WrappedScreen> {
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
                       description,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         color: Colors.white,
                       ),
@@ -124,7 +118,6 @@ class _WrappedScreenState extends State<WrappedScreen> {
                   "assets/code.svg",
                   width: 50, // Optional: Specify size
                   height: 50,
-                  //color: Colors.white, // Temporary color to test positioning
                 ),
               ),
           ],
@@ -151,12 +144,12 @@ class _WrappedScreenState extends State<WrappedScreen> {
 
   void _startTimer() {
     _timer?.cancel(); // Cancel the existing timer if any
-    _timer = Timer.periodic(Duration(seconds: 6), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 6), (_) {
       if (_currentSlideIndex < slideCount - 1) {
         _currentSlideIndex++;
         _pageController?.animateToPage(
           _currentSlideIndex,
-          duration: Duration(milliseconds: 500),
+          duration: const Duration(milliseconds: 500),
           curve: Curves.easeInOut,
         );
       } else {
@@ -219,12 +212,6 @@ class _WrappedScreenState extends State<WrappedScreen> {
       'totalSteps': totalSteps.toInt(),
     };
   }
-
-
-  List<Uint8List?> _slideImages = []; // Store captured images here
-
-
-  final ScreenshotController _screenshotController = ScreenshotController();
 
   @override
   Widget build(BuildContext context) {
@@ -355,7 +342,7 @@ class _WrappedScreenState extends State<WrappedScreen> {
                   index,
                     );
                   default:
-                    return SizedBox.shrink(); // Fallback for unexpected cases
+                    return const SizedBox.shrink(); // Fallback for unexpected cases
                 }
               },
             ),
@@ -372,7 +359,7 @@ class _WrappedScreenState extends State<WrappedScreen> {
                   _showWatermark = true;
                 });
                 // Wait for the next frame to ensure the watermark is rendered
-                await Future.delayed(Duration(milliseconds: 100));
+                await Future.delayed(const Duration(milliseconds: 100));
 
                 try {
                   // Capture screenshot
@@ -402,7 +389,7 @@ class _WrappedScreenState extends State<WrappedScreen> {
                 }
               },
               backgroundColor: Colors.white10,
-              child: Icon(Icons.camera_alt, color: Colors.black),
+              child: const Icon(Icons.camera_alt, color: Colors.black),
             ),
           ),
 
@@ -419,7 +406,7 @@ class _WrappedScreenState extends State<WrappedScreen> {
               progressColor: Colors.white,
               backgroundColor: Colors.grey,
               dotsActiveSize: 10.5,
-              dotsSpacing: EdgeInsets.symmetric(horizontal: 5),
+              dotsSpacing: const EdgeInsets.symmetric(horizontal: 5),
             ),
           ),
         ],
@@ -513,9 +500,6 @@ class _WrappedScreenState extends State<WrappedScreen> {
     return "You’ve walked the equivalent of ${totalSpacewalks.toStringAsFixed(1)} spacewalks around the ISS!";
   }
 
-
-
-
   String lightPowerComparison(int calories) {
     const double caloriesPerHourLight = 8.6; // Calories to power a 10W LED for 1 hour
 
@@ -523,12 +507,6 @@ class _WrappedScreenState extends State<WrappedScreen> {
 
     return "You’ve burned enough calories to power a 10-watt LED light for ${hoursPowered.toStringAsFixed(1)} hours in space!";
   }
-
-
-
-
-
-
 }
 
 
