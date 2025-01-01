@@ -2,17 +2,20 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:file_picker/file_picker.dart' as FilePickerDep;
 import 'package:fit_tool/fit_tool.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'Step2.dart';
+import 'audio_manager.dart';
 
 
 class UploadScreen extends StatefulWidget {
@@ -23,6 +26,18 @@ class UploadScreen extends StatefulWidget {
 class _UploadScreenState extends State<UploadScreen> {
   ValueNotifier<double> progressNotifier = ValueNotifier(0.0);
   bool isProcessing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    if (AudioManager.isPlaying) {
+// Stop and dispose of audio player
+      AudioManager.player.stop();
+      AudioManager.player.dispose();
+      AudioManager.isPlaying = false;
+    }
+  }
 
   Future<void> requestStoragePermission() async {
     if (Platform.isAndroid) {
@@ -197,7 +212,7 @@ class _UploadScreenState extends State<UploadScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 20,)
+            SizedBox(height: 120,)
           ],
         ),
       ),

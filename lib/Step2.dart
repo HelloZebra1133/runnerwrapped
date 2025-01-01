@@ -6,12 +6,15 @@ import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:gal/gal.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:linear_progress_bar/linear_progress_bar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
+
+import 'audio_manager.dart';
 
 class WrappedScreen extends StatefulWidget {
   final List<List<dynamic>> data;
@@ -36,10 +39,12 @@ class _WrappedScreenState extends State<WrappedScreen> {
   @override
   void initState() {
     super.initState();
+    //WidgetsBinding.instance.addObserver(this); // Add observer
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     stats = calculateStats(widget.data); // Initialize stats
     _pageController = PageController(); // Initialize the PageController
     _audioPlayer = AudioPlayer(); // Initialize the AudioPlayer
+    _audioPlayer.setReleaseMode(ReleaseMode.loop);
     _startAudio(); // Start the audio when the widget is created
     _startTimer(); // Start the timer for the slides
 
@@ -48,6 +53,9 @@ class _WrappedScreenState extends State<WrappedScreen> {
       _screenshotControllers.add(ScreenshotController());
     }
   }
+
+
+
 
   @override
   void dispose() {
@@ -60,6 +68,7 @@ class _WrappedScreenState extends State<WrappedScreen> {
 
     // Dispose the page controller
     _pageController?.dispose();
+    //WidgetsBinding.instance.removeObserver(this); // Remove observer
 
     super.dispose();
   }
@@ -111,13 +120,11 @@ class _WrappedScreenState extends State<WrappedScreen> {
               Positioned(
                 bottom: 10,
                 right: 10,
-                child: Text(
-                  "GitHub: HelloZebra1133",
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: SvgPicture.asset(
+                  "assets/code.svg",
+                  width: 50, // Optional: Specify size
+                  height: 50,
+                  //color: Colors.white, // Temporary color to test positioning
                 ),
               ),
           ],
@@ -127,12 +134,19 @@ class _WrappedScreenState extends State<WrappedScreen> {
   }
 
 
-
+  void _stopAudio() async {
+    await AudioManager.player.stop();
+    setState(() {
+      AudioManager.isPlaying = false;
+    });
+  }
 
   void _startAudio() async {
-    await _audioPlayer.setSource(AssetSource('space/bg_music.mp3'));
-    Source audioSource;
-    _audioPlayer.resume();
+    await AudioManager.player.play(AssetSource('space/bg_music.mp3'));
+    //AudioManager.player.resume();
+    setState(() {
+      AudioManager.isPlaying = true;
+    });
   }
 
   void _startTimer() {
@@ -214,7 +228,18 @@ class _WrappedScreenState extends State<WrappedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+        onWillPop: () async {
+      // Handle back button press here
+      print("Back button pressed!");
+      setState(() {
+        // Return `true` to allow the app to navigate back
+        // Return `false` to prevent it
+        AudioManager.player.stop();
+      });
+      return true;
+    },
+    child: Scaffold(
       body: Stack(
         children: [
           Positioned.fill(
@@ -346,6 +371,8 @@ class _WrappedScreenState extends State<WrappedScreen> {
                 setState(() {
                   _showWatermark = true;
                 });
+                // Wait for the next frame to ensure the watermark is rendered
+                await Future.delayed(Duration(milliseconds: 100));
 
                 try {
                   // Capture screenshot
@@ -367,6 +394,8 @@ class _WrappedScreenState extends State<WrappedScreen> {
                 } catch (e) {
                   print("Error capturing screenshot: $e");
                 } finally {
+                  // do something to wait for 2 seconds
+                  await Future.delayed(const Duration(seconds: 2), (){});
                   setState(() {
                     _showWatermark = false;
                   });
@@ -395,6 +424,7 @@ class _WrappedScreenState extends State<WrappedScreen> {
           ),
         ],
       ),
+    )
     );
   }
 
