@@ -57,6 +57,7 @@ dependencies:
   ffmpeg_kit_flutter_min: ^6.0.3
   screenshot: ^3.0.0
   image: ^4.5.2
+  gal: ^2.3.1
 
 
   # The following adds the Cupertino Icons font to your application.

@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -340,21 +341,27 @@ class _WrappedScreenState extends State<WrappedScreen> {
             right: 20,
             child: FloatingActionButton(
               onPressed: () async {
+                final hasAccess = await Gal.hasAccess(toAlbum: true);
+                await Gal.requestAccess(toAlbum: true);
+
                 setState(() {
                   _showWatermark = true;
                 });
-                try {
-                  Uint8List? imageBytes = await _screenshotControllers[_currentSlideIndex].capture();
-                  if (imageBytes != null) {
-                    // Get the directory to save the file
-                    Directory directory = await getApplicationDocumentsDirectory();
-                    String filePath = '${directory.path}/screenshot_slide_${_currentSlideIndex}.png';
 
-                    // Save the file
-                    File file = File(filePath);
+                try {
+                  // Capture screenshot
+                  Uint8List? imageBytes = await _screenshotControllers[_currentSlideIndex].capture();
+
+                  if (imageBytes != null) {
+                    // Save the image to a temporary file
+                    final directory = await getTemporaryDirectory();
+                    final filePath = '${directory.path}/screenshot_${DateTime.now().millisecondsSinceEpoch}.png';
+                    final file = File(filePath);
                     await file.writeAsBytes(imageBytes);
 
-                    print("Screenshot saved successfully at $filePath");
+                    // Save the file to the album
+                    await Gal.putImage(filePath, album: 'RunnerWrapped');
+                    print("Screenshot saved to gallery");
                   } else {
                     print("Failed to capture screenshot");
                   }
@@ -367,10 +374,10 @@ class _WrappedScreenState extends State<WrappedScreen> {
                 }
               },
               backgroundColor: Colors.white10,
-              child: Icon(Icons.camera_alt, color: Colors.black,),
-            )
-
+              child: Icon(Icons.camera_alt, color: Colors.black),
+            ),
           ),
+
 
           // LinearProgressBar overlay at the top of the screen
           Positioned(
@@ -391,6 +398,7 @@ class _WrappedScreenState extends State<WrappedScreen> {
       ),
     );
   }
+
 
 
 
