@@ -7,7 +7,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
-import 'package:image/image.dart' as img;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:linear_progress_bar/linear_progress_bar.dart';
