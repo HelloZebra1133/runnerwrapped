@@ -8,6 +8,7 @@ import 'package:file_picker/file_picker.dart' as FilePickerDep;
 import 'package:fit_tool/fit_tool.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -91,6 +92,15 @@ print ("Checking...");
         );
       } catch (e) {
         print("Error processing ZIP: $e");
+
+        // Show a toast message
+        Fluttertoast.showToast(
+          msg: "Invalid ZIP file or no valid files found.\nEnsure you submit a valid Strava ZIP file.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
       } finally {
         setState(() {
           isProcessing = false;
